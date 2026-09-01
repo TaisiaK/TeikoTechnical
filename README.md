@@ -1,57 +1,57 @@
 # TeikoTechnical
 
-##Summary 
+## Summary 
 This repository contains my Teiko technical examination submission, covering all parts detailed in the instructions.
 
 I received the assignment late Friday evening and, due to unreliable internet access over the weekend, was only able to open it on Monday. As a result, the implementation was completed under a significantly compressed timeline. While I was able to complete the core functionality and required outputs, the limited time for final validation and refinement meant I was unable to test the pipeline as extensively as I would have liked. The dashboard, in particular, was completed with limited time for iteration and polish.
 
 ## Instructions to Reproduce Outputs 
-1. Clones the repository and navigate to the project root: 
-    git clone https://github.com/TaisiaK/TeikoTechnical.git
-    cd TeikoTechnical
+1. Clones the repository and navigate to the project root: <br>
+    git clone https://github.com/TaisiaK/TeikoTechnical.git <br>
+    cd TeikoTechnical <br>
 2. Install dependencies 
-    run: make setup 
-Installs the Python dependiencies in requirement.txt. The project was developed and tested using Python 3.9.9. For reproducibility, Python 3.9.9 is the recommended version. 
-3.  Run the complete data pipeline 
-    run: make pipeline 
-This will load data, intialize database, preform analysis, and generate analysis outputs that are added stored in the outputs file. 
-4. Launch the dashboard 
-    run: make dashboard 
-This starts the Streamlit dashboard locally. The link to the dashboard is: http://localhost:8501. 
+    run: make setup <br>
+Installs the Python dependiencies in requirement.txt. The project was developed and tested using Python 3.9.9. For reproducibility, Python 3.9.9 is the recommended version. <br>
+3.  Run the complete data pipeline <br>
+    run: make pipeline <br>
+This will load data, intialize database, preform analysis, and generate analysis outputs that are added stored in the outputs file. <br>
+4. Launch the dashboard <br>
+    run: make dashboard <br>
+This starts the Streamlit dashboard locally. The link to the dashboard is: http://localhost:8501. <br>
 
 ## Releational Database Scheme and Rational 
 The database is made up of three tables: subjects, samples, and cell_counts. This structure was chosen to separate subject-level information, sample-level information, and sample measurements. This decreases redundancy and provides flexibility as the data scales in the number of projects, samples, and cell populations measured. 
 
 ### Schema 
-subjects 
-CREATE TABLE subjects (
-            subject_id TEXT PRIMARY KEY, 
-            project TEXT NOT NULL, 
-            condition TEXT NOT NULL, 
-            age INTEGER NOT NULL, 
-            sex TEXT NOT NULL,
-            treatment TEXT NOT NULL,
-            response TEXT);
+subjects <br>
+CREATE TABLE subjects ( <br>
+            subject_id TEXT PRIMARY KEY, <br>
+            project TEXT NOT NULL, <br>
+            condition TEXT NOT NULL, <br>
+            age INTEGER NOT NULL, <br>
+            sex TEXT NOT NULL, <br>
+            treatment TEXT NOT NULL,<br>
+            response TEXT);<br>
 
 This table stores information that describes an individual subject, including project, demographic, and treatment information. SQL query testing led to the assumption that each subject is associated with one project. Therefore, project information was stored at this level to avoid duplicating project information for all samples belonging to a subject. For similar reasons, treatment and response were stored at this level. 
 
-Samples 
-CREATE TABLE samples (
-            sample_id TEXT PRIMARY KEY, 
-            subject_id TEXT NOT NULL,  
-            sample_type TEXT NOT NULL, 
-            time_from_treatment_start INTEGER NOT NULL, 
-            FOREIGN KEY (subject_id) REFERENCES  subjects(subject_id));
+Samples <br>
+CREATE TABLE samples ( <br>
+            sample_id TEXT PRIMARY KEY, <br>
+            subject_id TEXT NOT NULL,  <br>
+            sample_type TEXT NOT NULL, <br>
+            time_from_treatment_start INTEGER NOT NULL, <br>
+            FOREIGN KEY (subject_id) REFERENCES  subjects(subject_id));<br>
 
 The samples table stores information specific to each biological sample. Unique sample_ids and references to subject_id are used to represent the one-to-many relationship between subjects and samples. Although SQL query testing showed that sample_type is consistent across all samples from an individual subject, it was stored at the sample level because it describes the biological sample rather than the subject. This also allows the schema to accommodate future datasets where a subject may contribute different sample types.
 
-cell_counts
-CREATE TABLE cell_counts (
-            sample_id TEXT NOT NULL, 
-            population TEXT NOT NULL, 
-            count INTEGER NOT NULL, 
-            PRIMARY KEY (sample_id, population), 
-            FOREIGN KEY (sample_id) REFERENCES samples(sample_id));
+cell_counts <br>
+CREATE TABLE cell_counts ( <br>
+            sample_id TEXT NOT NULL, <br>
+            population TEXT NOT NULL, <br>
+            count INTEGER NOT NULL, <br>
+            PRIMARY KEY (sample_id, population), <br>
+            FOREIGN KEY (sample_id) REFERENCES samples(sample_id));<br>
 
 This table stores cell-population measurements for each sample. Each population measurement is allocated to its own individual row. This design allows future projects to store new types of cell populations without restructuring the database. Similarly, if information is missing for some cell populations, the available measurements can still be uploaded without requiring empty columns or changes to the database schema.
  
